@@ -1,4 +1,5 @@
 # Load and install (if needed) R package dependencies
+
 ## 1) Package manager "pacman"
 if (!"pacman" %in% rownames(installed.packages())) {
   install.packages(pacman, repos = "https://cloud.r-project.org/")
@@ -7,14 +8,21 @@ if (!"pacman" %in% rownames(installed.packages())) {
 pkgs_gh <- paste0("KWB-R/" , c("kwb.utils", "kwb.fakin", "kwb.event"))
 
 pacman::p_load_gh(char = pkgs_gh)
+## 3) R package from Bioconductor
 
-## 2) R packages from CRAN
+### required dependency for drake v5.2.1 (latest CRAN release!)
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("graph")
+
+
+## 4) R packages from CRAN/Bioconductor
 
 # Names of required packages in alphabetical order
 pkgs_cran <- c(
-  "crayon", "data.table", "devtools", "dplyr", "fs", "readxl", "stringr",
-  "testthat", "tidyr", "janitor", "ggplot2"
+  "CodeDepends", "crayon", "data.table", "devtools", "dplyr", "drake", "fs", "ggplot2", "janitor",
+  "readxl", "stringr", "testthat", "tidyr"
 )
+
 
 pacman::p_load(char = pkgs_cran)
 
@@ -22,7 +30,8 @@ pacman::p_load(char = pkgs_cran)
 # Define paths to scripts with functions
 script_paths <- file.path("./R", c(
   "convert_xls_as_xlsx.R",
-  "convert_to_data_frames.R", "copy_xlsx_files.R",
+  "convert_to_data_frames.R", 
+  "copy_xlsx_files.R",
   "file_database.R",
   "get_raw_text_from_xlsx.R",
   "get_tables_from_xlsx.R",
@@ -33,7 +42,8 @@ script_paths <- file.path("./R", c(
   "utils.R",
   "add_lookup_data.R",
   "get_foerdermengen.R",
-  "copy_lookup_para_file.R"
+  "copy_lookup_para_file.R",
+  "prepare_excel_files.R"
 ))
 
 # Check if all scripts exist
@@ -59,8 +69,8 @@ paths <- list(
   sites = "<export_dir_meta>/Info-Altdaten.xlsx"
 )
 
-paths <- kwb.utils::resolve(paths, root = "root_server")
-# paths <- kwb.utils::resolve(paths, root = "C:/projects")
+#paths <- kwb.utils::resolve(paths, root = "root_server")
+paths <- kwb.utils::resolve(paths, root = "C:/projects")
 
 
 
@@ -77,6 +87,7 @@ if (!dir.exists(paths$export_dir)) {
   fs::dir_create(paths$export_dir)
 }
 export_dir <- kwb.utils::safePath(selectElements(paths, "export_dir"))
+
 
 if (FALSE) {
   # Convert xls to xlsx Excel files
@@ -191,11 +202,19 @@ Importing %d out of %d files
 ))))
 
 
+files_header_4 <- files[stringr::str_detect(
+  string = files,
+  pattern = paste0(files_header_4, collapse = "|")
+)]
+
+
+files_header_1_meta <- files[stringr::str_detect(
+  string = files,
+  pattern = paste0(files_header_1_meta, collapse = "|")
+)]
+
+
 if (FALSE) {
-  files_header_4 <- files[stringr::str_detect(
-    string = files,
-    pattern = paste0(files_header_4, collapse = "|")
-  )]
 
   labor_header4_list <- import_labor(
     files = files_header_4,
@@ -211,10 +230,6 @@ if (FALSE) {
     fill = TRUE
   )
 
-  files_header_1_meta <- files[stringr::str_detect(
-    string = files,
-    pattern = paste0(files_header_1_meta, collapse = "|")
-  )]
 
 
   labor_list_1meta <- import_labor(
@@ -508,4 +523,78 @@ if (FALSE) {
   sum(unlist(sapply(labor_header1_meta)))
 
   packrat::snapshot()
+}
+
+if(FALSE) {
+  
+  files_header_4 <- files[stringr::str_detect(
+    string = files,
+    pattern = paste0(files_header_4, collapse = "|")
+  )]
+  
+  files_header_1_meta <- files[stringr::str_detect(
+    string = files,
+    pattern = paste0(files_header_1_meta, collapse = "|")
+  )]
+  
+  
+  import_labor(
+    files = files_header_4,
+    export_dir = export_dir,
+    func = read_bwb_header4
+  ) %>% data.table::rbindlist(fill = TRUE)
+  
+  has_errors <- sapply(labor_header4_list, inherits, "try-error")
+  has_errors
+  
+  labor_header4_df <- data.table::rbindlist(
+    l = labor_header4_list[!has_errors],
+    fill = TRUE
+  )
+  
+
+  config <-  drake::drake_plan(
+    # xls_files = drake::file_in(get_xls_file_paths(input_dir)),
+    # convert_to_xlsx = convert_xls_as_xlsx2(xls_files, input_dir, export_dir),
+    # copy_xlsx = copy_xlsx_files(input_dir, export_dir, overwrite = TRUE),
+    labor_header1_meta = import_labor(
+      files = file_in("C:/projects/geosalz/precleaned-data/v0.3/K-TL_LSW-Altdaten-Werke Teil 1/Werke Teil 1/Allgemein/FRI_Br_GAL_C_Einzelparameter.xlsx"),
+      export_dir = export_dir,
+      func = read_bwb_header1_meta) %>% 
+      data.table::rbindlist(fill = TRUE),
+    labor_header2 =   import_labor(
+      files = file_in(files_to_import),
+      export_dir = export_dir,
+      func = read_bwb_header2) %>% 
+      data.table::rbindlist(fill = TRUE),
+    labor_header4 =   import_labor(
+      files = files_header_4,
+      export_dir = export_dir,
+      func = read_bwb_header4) %>% 
+      data.table::rbindlist(fill = TRUE),
+    labor_all = data.table::rbindlist(l = list(labor_header2, 
+                                                labor_header4),
+                                       fill = TRUE),
+    labor_all_clean = labor_all %>%
+      dplyr::filter(!is.na(DataValue)) %>%
+      dplyr::mutate(Date = dplyr::if_else(condition = !is.na(Datum),
+                     true = Datum, 
+                     false =  Probenahme)) %>%
+      ### Some "Datum" rentries are missing in;
+      ### K-TL_LSW-Altdaten-Werke Teil 1\Werke Teil 1\Kaulsdorf\KAU_1999-Okt2003.xlsx
+      ### sheets: 66 KAU Rein 1999-2000, 65 KAU NordSüd 1999-2000
+      dplyr::filter(!is.na(Date)) %>%
+      dplyr::filter(!is.na(VariableName_org)),
+    labordaten_ww = add_para_metadata(df = labor_all_clean,
+      lookup_para_path = file_in(paths$lookup_para),
+      parameters_path = file_in(paths$parameters)) %>% 
+      add_site_metadata(site_path = file_in(paths$sites)) %>%
+      dplyr::mutate(year = as.numeric(format(Date,format = '%Y')),
+        DataValue = as.numeric(DataValue)),
+    strings_in_dots = "literals"
+    )
+  
+  make(plan = config)
+  drake::vis_drake_graph()
+  drake::drake_graph()
 }
