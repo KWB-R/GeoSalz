@@ -5,7 +5,7 @@ if (!"pacman" %in% rownames(installed.packages())) {
   install.packages(pacman, repos = "https://cloud.r-project.org/")
 }
 ## 2) R packages from Github
-pkgs_gh <- paste0("KWB-R/" , c("kwb.utils", "kwb.fakin", "kwb.event"))
+pkgs_gh <- paste0("KWB-R/" , c("kwb.utils"))
 
 pacman::p_load_gh(char = pkgs_gh)
 ## 3) R package from Bioconductor
@@ -20,7 +20,7 @@ pacman::p_load_gh(char = pkgs_gh)
 # Names of required packages in alphabetical order
 pkgs_cran <- c(
   "CodeDepends", "crayon", "data.table", "devtools", "dplyr", "drake", "fs", "ggplot2", "janitor",
-  "readxl", "stringr", "testthat", "tidyr"
+  "readxl", "stringr", "tidyr"
 )
 
 
@@ -32,14 +32,7 @@ script_paths <- file.path("./R", c(
   "convert_xls_as_xlsx.R",
   "convert_to_data_frames.R", 
   "copy_xlsx_files.R",
-  "file_database.R",
-  "get_raw_text_from_xlsx.R",
-  "get_tables_from_xlsx.R",
-  "guess.R",
-  "metadata.R",
-  "print_table_summary.R",
   "read_bwb_data.R",
-  "utils.R",
   "add_lookup_data.R",
   "get_foerdermengen.R",
   "copy_lookup_para_file.R",
@@ -103,12 +96,6 @@ if (FALSE) {
   )
 }
 
-if (FALSE) {
-  convert_xls_as_xlsx(
-    input_dir = paths$input_dir_sel,
-    export_dir = paths$export_dir_sel
-  )
-}
 
 # Get all xlsx files to be imported
 files <- dir(export_dir, ".xlsx", recursive = TRUE, full.names = TRUE)
@@ -298,7 +285,7 @@ if (FALSE) {
   )
 
   labordaten_ww <- add_site_metadata(
-    df = labor_all_sel,
+    df = labordaten_ww,
     site_path = paths$sites
   ) %>%
     dplyr::mutate_(
@@ -343,14 +330,14 @@ if (FALSE) {
 
     cat(sprintf("Creating plot:\n%s\n", pdf_file))
     pdf(file = pdf_file, width = 14, height = 9)
-    for (sel_para_id in unique(labor_all_sel$para_id)) {
+    for (sel_para_id in unique(labordaten_ww$para_id)) {
       my_selection <- sprintf(
         "%s (%s)",
         para_info$para_kurzname[para_info$para_id == sel_para_id],
         water_type
       )
 
-      tmp <- labor_all_sel %>%
+      tmp <- labordaten_ww %>%
         dplyr::filter_(sprintf("prufgegenstand == '%s'", water_type)) %>%
         dplyr::filter_(.dots = sprintf("para_id == %d", sel_para_id)) %>%
         dplyr::group_by_("para_kurzname", "werk", "year") %>%
@@ -526,19 +513,11 @@ if (FALSE) {
 }
 
 if(FALSE) {
+### Testing DRAKE workflow, for details see:
+### https://ropenscilabs.github.io/drake-manual/index.html
+
   
-  files_header_4 <- files[stringr::str_detect(
-    string = files,
-    pattern = paste0(files_header_4, collapse = "|")
-  )]
-  
-  files_header_1_meta <- files[stringr::str_detect(
-    string = files,
-    pattern = paste0(files_header_1_meta, collapse = "|")
-  )]
-  
-  
-  import_labor(
+  labor_header4_list <- import_labor(
     files = files_header_4,
     export_dir = export_dir,
     func = read_bwb_header4
