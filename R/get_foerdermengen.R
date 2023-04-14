@@ -1,4 +1,6 @@
-get_foerdermengen <- function(path) {
+# This function slightly differs from kwb.geosalz::get_foerdermengen
+get_foerdermengen <- function(path) 
+{
   `%>%` <- magrittr::`%>%`
 
   q_ww <- readxl::read_xlsx(path, sheet = "WW Q Rhow ", range = "A4:S127") %>%
