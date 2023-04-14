@@ -31,11 +31,9 @@ pacman::p_load(char = pkgs_cran)
 script_paths <- file.path("./R", c(
   "convert_xls_as_xlsx.R",
   "convert_to_data_frames.R", 
-  "copy_xlsx_files.R",
   "read_bwb_data.R",
   "add_lookup_data.R",
   "get_foerdermengen.R",
-  "copy_lookup_para_file.R",
   "prepare_excel_files.R"
 ))
 
@@ -88,9 +86,9 @@ if (FALSE) {
 
 
   # Copy remaining already existing .xlsx files in same directory
-  copy_xlsx_files(input_dir, export_dir, overwrite = TRUE)
+  kwb.geosalz::copy_xlsx_files(input_dir, export_dir, overwrite = TRUE)
 
-  copy_lookup_para_file(paths$input_dir_meta,
+  kwb.geosalz::copy_lookup_para_file(paths$input_dir_meta,
     paths$export_dir_meta,
     overwrite = FALSE
   )
@@ -464,7 +462,7 @@ if (FALSE) {
       export_dir
     )
   } else {
-    copy_xlsx_files(
+    kwb.geosalz::copy_xlsx_files(
       from_dir = dirname(org_file),
       to_dir = dirname(gsub(
         x = org_file,
@@ -535,7 +533,7 @@ if(FALSE) {
   config <-  drake::drake_plan(
     # xls_files = drake::file_in(get_xls_file_paths(input_dir)),
     # convert_to_xlsx = convert_xls_as_xlsx2(xls_files, input_dir, export_dir),
-    # copy_xlsx = copy_xlsx_files(input_dir, export_dir, overwrite = TRUE),
+    # copy_xlsx = kwb.geosalz::copy_xlsx_files(input_dir, export_dir, overwrite = TRUE),
     labor_header1_meta = import_labor(
       files = file_in("C:/projects/geosalz/precleaned-data/v0.3/K-TL_LSW-Altdaten-Werke Teil 1/Werke Teil 1/Allgemein/FRI_Br_GAL_C_Einzelparameter.xlsx"),
       export_dir = export_dir,
