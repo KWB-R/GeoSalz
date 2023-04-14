@@ -278,13 +278,13 @@ if (FALSE) {
 
 
 
-  labordaten_ww <- add_para_metadata(
+  labordaten_ww <- kwb.geosalz::add_para_metadata(
     df = labor_all,
     lookup_para_path = paths$lookup_para,
     parameters_path = paths$parameters
   )
 
-  labordaten_ww <- add_site_metadata(
+  labordaten_ww <- kwb.geosalz::add_site_metadata(
     df = labordaten_ww,
     site_path = paths$sites
   ) %>%
@@ -315,7 +315,7 @@ if (FALSE) {
 
 
 
-  para_info <- get_parameters_meta(paths$parameters)
+  para_info <- kwb.geosalz::get_parameters_meta(paths$parameters)
   water_types <- c("Reinwasser", "Rohwasser")
 
 
@@ -564,10 +564,10 @@ if(FALSE) {
       ### sheets: 66 KAU Rein 1999-2000, 65 KAU NordSüd 1999-2000
       dplyr::filter(!is.na(Date)) %>%
       dplyr::filter(!is.na(VariableName_org)),
-    labordaten_ww = add_para_metadata(df = labor_all_clean,
+    labordaten_ww = kwb.geosalz::add_para_metadata(df = labor_all_clean,
       lookup_para_path = file_in(paths$lookup_para),
       parameters_path = file_in(paths$parameters)) %>% 
-      add_site_metadata(site_path = file_in(paths$sites)) %>%
+      kwb.geosalz::add_site_metadata(site_path = file_in(paths$sites)) %>%
       dplyr::mutate(year = as.numeric(format(Date,format = '%Y')),
         DataValue = as.numeric(DataValue)),
     strings_in_dots = "literals"
