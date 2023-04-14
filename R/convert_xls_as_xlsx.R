@@ -1,10 +1,3 @@
-# Functions that are now in kwb.geosalz ----------------------------------------
-get_excelcnv_exe <- kwb.geosalz::get_excelcnv_exe
-safe_office_folder <- kwb.geosalz:::safe_office_folder
-delete_registry <- kwb.geosalz:::delete_registry
-convert_xls_as_xlsx <- kwb.geosalz::convert_xls_as_xlsx
-convert_xls_to_xlsx <- kwb.geosalz:::convert_xls_to_xlsx
-
 # get_file_paths_with_pattern --------------------------------------------------
 get_file_paths_with_pattern <- function(
     input_dir, 
@@ -35,7 +28,7 @@ convert_xls_as_xlsx2 <- function(
     xls_paths,
     input_dir,
     export_dir, 
-    office_folder = safe_office_folder(), 
+    office_folder = kwb.geosalz:::safe_office_folder(), 
     dbg = TRUE
 ) 
 {
@@ -50,11 +43,19 @@ convert_xls_as_xlsx2 <- function(
   
   fs::dir_create(path = normalizePath(dirname(xlsx)), recursive = TRUE)
   
-  exe <- normalizePath(get_excelcnv_exe(office_folder))
+  exe <- normalizePath(kwb.geosalz::get_excelcnv_exe(office_folder))
   
   for (i in seq_along(xls_paths)) {
-    convert_xls_to_xlsx(exe, xls_paths[i], xlsx[i], i, length(xls_paths), dbg = dbg)
     
-    delete_registry(office_folder, dbg = dbg)
+    kwb.geosalz:::convert_xls_to_xlsx(
+      exe, 
+      xls_paths[i], 
+      xlsx[i], 
+      i, 
+      length(xls_paths), 
+      dbg = dbg
+    )
+    
+    kwb.geosalz:::delete_registry(office_folder, dbg = dbg)
   }
 }

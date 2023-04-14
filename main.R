@@ -29,9 +29,7 @@ pacman::p_load(char = pkgs_cran)
 
 # Define paths to scripts with functions
 script_paths <- file.path("./R", c(
-  "convert_xls_as_xlsx.R",
   "convert_to_data_frames.R", 
-  "read_bwb_data.R",
   "add_lookup_data.R",
   "get_foerdermengen.R",
   "prepare_excel_files.R"
@@ -80,10 +78,10 @@ if (!dir.exists(paths$export_dir)) {
 export_dir <- kwb.utils::safePath(selectElements(paths, "export_dir"))
 
 
-if (FALSE) {
+if (FALSE)
+{
   # Convert xls to xlsx Excel files
-  convert_xls_as_xlsx(input_dir, export_dir)
-
+  kwb.geosalz::convert_xls_as_xlsx(input_dir, export_dir)
 
   # Copy remaining already existing .xlsx files in same directory
   kwb.geosalz::copy_xlsx_files(input_dir, export_dir, overwrite = TRUE)
@@ -204,7 +202,7 @@ if (FALSE) {
   labor_header4_list <- import_labor(
     files = files_header_4,
     export_dir = export_dir,
-    func = read_bwb_header4
+    func = kwb.geosalz::read_bwb_header4
   )
 
   has_errors <- sapply(labor_header4_list, inherits, "try-error")
@@ -220,7 +218,7 @@ if (FALSE) {
   labor_list_1meta <- import_labor(
     files = files_header_1_meta,
     export_dir = export_dir,
-    func = read_bwb_header1_meta
+    func = kwb.geosalz::read_bwb_header1_meta
   )
 
 
@@ -241,7 +239,7 @@ if (FALSE) {
   #
   # View(labor_list_1meta)
 
-  labor <- read_bwb_data(files = files_to_import)
+  labor <- kwb.geosalz::read_bwb_data(files = files_to_import)
 
   # View(head(labor))
 
@@ -430,7 +428,7 @@ if (FALSE) {
   file <- files_with_problems[3]
 
   ### Check problems in xlsx file
-  tmp_file <- read_bwb_data(file)
+  tmp_file <- kwb.geosalz::read_bwb_data(file)
 
   ### Open original file and modify it
   org_files <- dir(input_dir,
@@ -457,7 +455,7 @@ if (FALSE) {
   )
 
   if (is_xls) {
-    convert_xls_as_xlsx(
+    kwb.geosalz::convert_xls_as_xlsx(
       dirname(org_file),
       export_dir
     )
@@ -481,15 +479,17 @@ if (FALSE) {
   ))
 
   capture.output(file = output_files[1], {
-    labor <- read_bwb_data(files)
+    labor <- kwb.geosalz::read_bwb_data(files)
   })
 
   capture.output(file = output_files[2], {
-    labor_header1_meta <- import_labor(files, export_dir, read_bwb_header1_meta)
+    labor_header1_meta <- import_labor(
+      files, export_dir, kwb.geosalz::read_bwb_header1_meta
+    )
   })
 
   capture.output(file = output_files[3], {
-    labor_header2 <- import_labor(files, export_dir, read_bwb_header2)
+    labor_header2 <- import_labor(files, export_dir, kwb.geosalz::read_bwb_header2)
   })
 
   # Show file contents
@@ -518,7 +518,7 @@ if(FALSE) {
   labor_header4_list <- import_labor(
     files = files_header_4,
     export_dir = export_dir,
-    func = read_bwb_header4
+    func = kwb.geosalz::read_bwb_header4
   ) %>% data.table::rbindlist(fill = TRUE)
   
   has_errors <- sapply(labor_header4_list, inherits, "try-error")
@@ -532,22 +532,22 @@ if(FALSE) {
 
   config <-  drake::drake_plan(
     # xls_files = drake::file_in(get_xls_file_paths(input_dir)),
-    # convert_to_xlsx = convert_xls_as_xlsx2(xls_files, input_dir, export_dir),
+    # convert_to_xlsx = kwb.geosalz::convert_xls_as_xlsx2(xls_files, input_dir, export_dir),
     # copy_xlsx = kwb.geosalz::copy_xlsx_files(input_dir, export_dir, overwrite = TRUE),
     labor_header1_meta = import_labor(
       files = file_in("C:/projects/geosalz/precleaned-data/v0.3/K-TL_LSW-Altdaten-Werke Teil 1/Werke Teil 1/Allgemein/FRI_Br_GAL_C_Einzelparameter.xlsx"),
       export_dir = export_dir,
-      func = read_bwb_header1_meta) %>% 
+      func = kwb.geosalz::read_bwb_header1_meta) %>% 
       data.table::rbindlist(fill = TRUE),
     labor_header2 =   import_labor(
       files = file_in(files_to_import),
       export_dir = export_dir,
-      func = read_bwb_header2) %>% 
+      func = kwb.geosalz::read_bwb_header2) %>% 
       data.table::rbindlist(fill = TRUE),
     labor_header4 =   import_labor(
       files = files_header_4,
       export_dir = export_dir,
-      func = read_bwb_header4) %>% 
+      func = kwb.geosalz::read_bwb_header4) %>% 
       data.table::rbindlist(fill = TRUE),
     labor_all = data.table::rbindlist(l = list(labor_header2, 
                                                 labor_header4),
